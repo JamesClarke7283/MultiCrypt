@@ -1,6 +1,10 @@
 package main
 
 import (
+	"flag"
+	"os"
+	"runtime/pprof"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"github.com/JamesClarke7283/MultiCrypt/src/backend"
@@ -9,6 +13,21 @@ import (
 )
 
 func main() {
+	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
+	flag.Parse()
+
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			shared.GetLogger().Fatalf("could not create CPU profile: %v", err)
+		}
+		defer f.Close()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			shared.GetLogger().Fatalf("could not start CPU profile: %v", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
+
 	logger := shared.GetLogger()
 	logger.Info("Starting MultiCrypt application")
 
@@ -25,7 +44,6 @@ func main() {
 	w.SetContent(content)
 	w.Resize(fyne.NewSize(800, 600))
 
-	// Apply settings before showing the window
 	frontend.ApplySettings(a, w, config)
 
 	w.ShowAndRun()
